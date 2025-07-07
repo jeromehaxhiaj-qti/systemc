@@ -18,7 +18,7 @@ jobs:
       - name: CI-Build
         run: |
           echo 'Running in MSYS2 UCRT64!'
-          cmake -B BUILD
+          cmake -B build
           cmake --build build --parallel
 
 
@@ -37,7 +37,7 @@ jobs:
       - name: CI-Build
         run: |
           echo 'Running in MSYS2 CLANGARM64!'
-          cmake -B BUILD
+          cmake -B build
           cmake --build build --parallel
 
 
