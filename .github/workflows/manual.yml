@@ -14,7 +14,7 @@ jobs:
         with:
           msystem: UCRT64
           update: true
-          install: cmake mingw-w64-ucrt-x86_64-gcc
+          install: make cmake mingw-w64-ucrt-x86_64-gcc
       - name: CI-Build
         run: |
           echo 'Running in MSYS2 UCRT64!'
@@ -33,7 +33,7 @@ jobs:
         with:
           msystem: CLANGARM64
           update: true
-          install: cmake
+          install: make cmake
       - name: CI-Build
         run: |
           echo 'Running in MSYS2 CLANGARM64!'
