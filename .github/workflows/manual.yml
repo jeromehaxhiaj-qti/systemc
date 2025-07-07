@@ -3,18 +3,41 @@ name: manuals
 on: workflow_dispatch
 
 jobs:
-  ubuntu:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        version:  [24.04]
-        platform: [linux/amd64]
-        target: [gcc-shared]
+  msys2-ucrt64:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Build
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: cmake mingw-w64-ucrt-x86_64-gcc
+      - name: CI-Build
         run: |
-          docker buildx build --platform ${{ matrix.platform }} -t systemc_test --build-arg UBUNTU_VERSION=${{ matrix.version }} -f docker/ubuntu.dockerfile .
-          docker run -e SYSTEMC_CI_TARGET=${{ matrix.target }} systemc_test
+          echo 'Running in MSYS2 UCRT64!'
+          cmake -B BUILD
+          cmake --build build --parallel
+
+
+  msys2-clangarm64:
+    runs-on: windows-11-arm
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANGARM64
+          update: true
+          install: cmake
+      - name: CI-Build
+        run: |
+          echo 'Running in MSYS2 CLANGARM64!'
+          cmake -B BUILD
+          cmake --build build --parallel
+
+
