@@ -1,0 +1,20 @@
+name: manuals
+
+on: workflow_dispatch
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [20.04, 22.04, 24.04]
+        platform: [linux/amd64]
+        target: [gcc-shared, gcc-static, clang-shared, clang-static]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build
+        run: |
+          docker buildx build --platform ${{ matrix.platform }} -t systemc_test --build-arg UBUNTU_VERSION=${{ matrix.version }} -f docker/ubuntu.dockerfile .
+          docker run -e SYSTEMC_CI_TARGET=${{ matrix.target }} systemc_test
