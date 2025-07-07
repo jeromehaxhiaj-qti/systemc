@@ -33,7 +33,7 @@ jobs:
         with:
           msystem: CLANGARM64
           update: true
-          install: make cmake
+          install: make cmake mingw-w64-clang-aarch64-clang
       - name: CI-Build
         run: |
           echo 'Running in MSYS2 CLANGARM64!'
