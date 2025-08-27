@@ -457,41 +457,29 @@ endforeach()
 
 # Windows DLLs can't contain unresolved symbols, so we need to spilt library
 # into two:
-#  - ${SYSTEMC_DLL_TARGET}.dll is a shared library without unresolved symbols
-#  - systemc.lib contains main() and unresolved sc_main()
-# Then we merge interface library ${SYSTEMC_DLL_TARGET}.lib into systemc.lib
+#  - systemc_shared.dll is a shared library without unresolved symbols
+#  - systemc_static.lib contains main() and unresolved sc_main()
+# Then we merge interface library systemc_shared.lib into systemc_static.lib
 
-    set(SYSTEMC_DLL_TARGET systemc-${SystemCLanguage_VERSION})
+    add_systemc_library(systemc_shared SC_BUILD SHARED ${SYSTEMC_CORE_SRC} ${SYSTEMC_CORE_SRC_PRIVATE})
+    add_systemc_library(systemc_static SC_BUILD_OFF STATIC ${SYSTEMC_SC_MAIN_SRC} )
 
-    add_systemc_library(${SYSTEMC_DLL_TARGET} SC_BUILD SHARED ${SYSTEMC_CORE_SRC} ${SYSTEMC_CORE_SRC_PRIVATE})
-
-    add_systemc_library(systemc SC_BUILD_OFF STATIC ${SYSTEMC_SC_MAIN_SRC} )
+    # Create interface library that combines both shared and static libraries
+    add_library(systemc INTERFACE)
+    target_link_libraries(systemc INTERFACE systemc_shared systemc_static)
 
     if (MSVC) # lib.exe should be available from MSVC command promt
 
         add_custom_command(
-                TARGET systemc
+                TARGET systemc_static
                 POST_BUILD
-                COMMAND lib.exe /OUT:$<TARGET_FILE:systemc> $<TARGET_FILE:systemc> $<TARGET_LINKER_FILE:${SYSTEMC_DLL_TARGET}>
-                COMMENT "Combining SystemC libs..."
-        )
-
-    else(MSVC)
-
-        add_custom_command(
-                TARGET systemc
-                POST_BUILD
-                COMMAND ar x $<TARGET_FILE:systemc>
-                COMMAND ar x $<TARGET_LINKER_FILE:${SYSTEMC_DLL_TARGET}>
-                COMMAND del *.a
-                COMMAND ar qc $<TARGET_FILE:systemc>  *.o *.obj
-                COMMAND del *.o *.obj
+                COMMAND lib.exe /OUT:$<TARGET_FILE:systemc_static> $<TARGET_FILE:systemc_static> $<TARGET_LINKER_FILE:systemc_shared>
                 COMMENT "Combining SystemC libs..."
         )
 
     endif(MSVC)
 
-    set(SYSTEMC_TARGETS systemc ${SYSTEMC_DLL_TARGET})
+    set(SYSTEMC_TARGETS systemc systemc_static systemc_shared)
 
 else(BUILD_SHARED_LIBS AND (WIN32 OR CYGWIN))
 
@@ -507,6 +495,7 @@ else(BUILD_SHARED_LIBS AND (WIN32 OR CYGWIN))
 endif(BUILD_SHARED_LIBS AND (WIN32 OR CYGWIN))
 
 add_library(SystemC::systemc ALIAS systemc)
+
 
 install(TARGETS ${SYSTEMC_TARGETS} EXPORT SystemCLanguageTargets
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
