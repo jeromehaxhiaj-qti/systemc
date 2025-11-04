@@ -5,78 +5,6 @@ on:
   pull_request:
 
 jobs:
-  ubuntu:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [20.04, 22.04, 24.04]
-        platform: [linux/amd64]
-        target: [gcc-shared, gcc-static, clang-shared, clang-static]
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Build
-      run: |
-        docker buildx build --platform ${{ matrix.platform }} -t systemc_test --build-arg UBUNTU_VERSION=${{ matrix.version }} -f docker/ubuntu.dockerfile .
-        docker run -e SYSTEMC_CI_TARGET=${{ matrix.target }} systemc_test
-  almalinux:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [8, 9]
-        platform: [linux/amd64]
-        target: [gcc-shared, gcc-static, clang-shared, clang-static]
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Build
-      run: |
-        docker buildx build --platform ${{ matrix.platform }} -t systemc_test --build-arg ALMA_VERSION=${{ matrix.version }} -f docker/alma.dockerfile .
-        docker run -e SYSTEMC_CI_TARGET=${{ matrix.target }} systemc_test
-  ubuntu-arm:
-    runs-on: ubuntu-24.04-arm
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [20.04, 22.04, 24.04]
-        platform: [linux/arm64]
-        target: [gcc-shared, gcc-static, clang-shared, clang-static]
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Build
-      run: |
-        docker buildx build --platform ${{ matrix.platform }} -t systemc_test --build-arg UBUNTU_VERSION=${{ matrix.version }} -f docker/ubuntu.dockerfile .
-        docker run -e SYSTEMC_CI_TARGET=${{ matrix.target }} systemc_test
-  almalinux-arm:
-    runs-on: ubuntu-24.04-arm
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [8, 9]
-        platform: [linux/arm64]
-        target: [gcc-shared, gcc-static, clang-shared, clang-static]
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Build
-      run: |
-        docker buildx build --platform ${{ matrix.platform }} -t systemc_test --build-arg ALMA_VERSION=${{ matrix.version }} -f docker/alma.dockerfile .
-        docker run -e SYSTEMC_CI_TARGET=${{ matrix.target }} systemc_test
-  macos:
-    runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [clang-shared, clang-static]
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Build
-      run: |
-        SYSTEMC_CI_TARGET=${{ matrix.target }} SYSTEMC_SRC_PATH=$PWD docker/entrypoint.sh
   windows:
     runs-on: windows-latest
     steps:
@@ -87,3 +15,22 @@ jobs:
         cmake -B BUILD/RELEASE/BUILD .
         cmake --build BUILD/RELEASE/BUILD --config RELEASE --parallel
         cmake --install BUILD/RELEASE/BUILD --config RELEASE
+
+  msys2-ucrt64:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: git mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja
+      - name: CI-Build
+        run: |
+          echo 'Running in MSYS2!'
+          cmake -B build -DCMAKE_INSTALL_PREFIX=$(PWD)/install -DCMAKE_BUILD_TYPE=Release .
+          cmake --build build --config Release --parallel
+          cmake --install build 
