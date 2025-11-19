@@ -89,6 +89,10 @@ jobs:
         cmake --install BUILD/RELEASE/BUILD --config RELEASE
   msys2-ucrt64:
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [gcc-shared, gcc-static]
     defaults:
       run:
         shell: msys2 {0}
@@ -99,11 +103,15 @@ jobs:
           msystem: UCRT64
           update: true
           install: git mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja
-      - name: CI-Build
+      - name: Build
         run: |
-          ./msys2-ci-build.sh
+          SYSTEMC_CI_TARGET=${{ matrix.target }} SYSTEMC_SRC_PATH=$PWD docker/entrypoint.sh
   msys2-clangarm64:
     runs-on: windows-11-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [clang-shared, clang-static]
     defaults:
       run:
         shell: msys2 {0}
@@ -114,6 +122,6 @@ jobs:
           msystem: CLANGARM64
           update: true
           install: git mingw-w64-clang-aarch64-clang  mingw-w64-clang-aarch64-cmake mingw-w64-clang-aarch64-ninja
-      - name: CI-Build
+      - name: Build
         run: |
-          ./msys2-ci-build.sh
+          SYSTEMC_CI_TARGET=${{ matrix.target }} SYSTEMC_SRC_PATH=$PWD docker/entrypoint.sh
