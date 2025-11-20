@@ -36,6 +36,18 @@ enable_testing()
 if(NOT TARGET check)
   add_custom_target(check)
 endif()
+
+# Track the order of check targets for sequential execution
+get_property(_CHECK_TARGETS GLOBAL PROPERTY SYSTEMC_CHECK_TARGETS)
+if(_CHECK_TARGETS)
+  # Add dependency to run after the previous check target
+  list(GET _CHECK_TARGETS -1 _PREVIOUS_CHECK_TARGET)
+  add_dependencies(check-${TEST_CATEGORY} ${_PREVIOUS_CHECK_TARGET})
+endif()
+list(APPEND _CHECK_TARGETS check-${TEST_CATEGORY})
+set_property(GLOBAL PROPERTY SYSTEMC_CHECK_TARGETS "${_CHECK_TARGETS}")
+
+# Add this check target as a dependency of the main check target
 add_dependencies(check check-${TEST_CATEGORY})
 
 set_property(GLOBAL PROPERTY USE_FOLDERS TRUE)
